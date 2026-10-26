@@ -3669,6 +3669,11 @@ ncclResult_t ncclCommShrink(ncclComm_t comm, int* excludeRanksList, int excludeR
 exit:
   (void)ncclGroupErrCheck(res);
   NCCLCHECK(ncclGroupEndInternal());
+  /* Non-blocking: surface the parent's pending state (the background child
+   * init still writes *newcomm); keep res if it already holds an error. */
+  if (res == ncclSuccess && !comm->config.blocking) {
+    NCCLCHECK(ncclCommGetAsyncError(comm, &res));
+  }
 
   if (newcomm && *newcomm) {
     NVTX3_RANGE_ADD_PAYLOAD(CommShrink, NcclNvtxParamsCommShrinkSchema,
@@ -3886,6 +3891,11 @@ ncclResult_t ncclCommSplit(ncclComm_t comm, int color, int key, ncclComm_t* newc
 exit:
   (void)ncclGroupErrCheck(res);
   NCCLCHECK(ncclGroupEndInternal());
+  /* Non-blocking: surface the parent's pending state (the background child
+   * init still writes *newcomm); keep res if it already holds an error. */
+  if (res == ncclSuccess && !comm->config.blocking) {
+    NCCLCHECK(ncclCommGetAsyncError(comm, &res));
+  }
 
   if (newcomm && *newcomm) {
     NVTX3_RANGE_ADD_PAYLOAD(CommSplit, NcclNvtxParamsCommSplitSchema,
